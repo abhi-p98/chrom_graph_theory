@@ -1,0 +1,12 @@
+fastapi==0.115.12
+uvicorn[standard]==0.34.0
+pandas==2.2.3
+numpy==1.26.4
+networkx==3.2.1
+python-louvain==0.16
+pydantic==2.10.6
+python-multipart==0.0.20
+scipy==1.13.1
+scikit-learn==1.5.2
+orjson==3.10.15
+aiofiles==24.1.0
