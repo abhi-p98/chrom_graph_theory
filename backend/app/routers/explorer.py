@@ -39,7 +39,7 @@ def get_genes(
 ) -> GenesResponse:
     bundle = _load_bundle_or_404(store, chromosome)
 
-    lookup = bundle.gene_lookup
+    lookup = _filter_lookup_to_visible_nodes(bundle.gene_lookup, set(bundle.node_index))
     if q:
         query = q.lower().strip()
         filtered = {
@@ -108,6 +108,24 @@ def get_shortest_path(
             },
         )
 
+    if source_node not in bundle.node_index:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "message": f"Gene '{gene1}' is mapped to bin '{source_node}', but that bin is not present in the current graph for {bundle.chromosome}.",
+                "tip": "Search genes from /genes to use only genes available in the current graph.",
+            },
+        )
+
+    if target_node not in bundle.node_index:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "message": f"Gene '{gene2}' is mapped to bin '{target_node}', but that bin is not present in the current graph for {bundle.chromosome}.",
+                "tip": "Search genes from /genes to use only genes available in the current graph.",
+            },
+        )
+
     try:
         path_nodes = nx.shortest_path(
             bundle.distance_graph,
@@ -138,7 +156,7 @@ def get_shortest_path(
         edge_data = bundle.distance_graph[left][right]
         path_edges.append(
             {
-                "id": f"{left}--{right}",
+                "id": str(edge_data.get("id", f"{left}--{right}")),
                 "source": left,
                 "target": right,
                 "weight": float(edge_data.get("weight", 0.0)),
@@ -175,3 +193,12 @@ def _resolve_gene_to_node(gene_name: str, lookup: Dict[str, List[str]]) -> Optio
             return sorted(lookup[key])[0]
 
     return None
+
+
+def _filter_lookup_to_visible_nodes(lookup: Dict[str, List[str]], visible_nodes: set[str]) -> Dict[str, List[str]]:
+    filtered: Dict[str, List[str]] = {}
+    for gene, bins in lookup.items():
+        visible_bins = [bin_id for bin_id in bins if bin_id in visible_nodes]
+        if visible_bins:
+            filtered[gene] = visible_bins
+    return filtered
