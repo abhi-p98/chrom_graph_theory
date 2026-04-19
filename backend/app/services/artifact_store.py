@@ -66,6 +66,7 @@ class ArtifactStore:
             distance_graph.add_edge(
                 source,
                 target,
+                id=str(data.get("id", f"{source}--{target}")),
                 weight=float(data.get("weight", 0.0)),
                 distance=float(data.get("distance", 0.0)),
             )
